@@ -127,35 +127,35 @@ async changeClipboardHandlingSetting(handling: string) : Promise<Result<null, st
 },
 async changeAiRewriteEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_enabled_setting", { enabled }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
+        return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_enabled_setting", { enabled }) };
+    } catch (e) {
+        if(e instanceof Error) throw e;
+        else return { status: "error", error: e  as any };
+    }
 },
 async changeAiRewriteApiKeySetting(apiKey: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_api_key_setting", { apiKey }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
+        return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_api_key_setting", { apiKey }) };
+    } catch (e) {
+        if(e instanceof Error) throw e;
+        else return { status: "error", error: e  as any };
+    }
 },
 async changeAiRewriteModelSetting(model: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_model_setting", { model }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
+        return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_model_setting", { model }) };
+    } catch (e) {
+        if(e instanceof Error) throw e;
+        else return { status: "error", error: e  as any };
+    }
 },
 async changeAiRewriteSystemPromptSetting(prompt: string) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_system_prompt_setting", { prompt }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
+        return { status: "ok", data: await TAURI_INVOKE("change_ai_rewrite_system_prompt_setting", { prompt }) };
+    } catch (e) {
+        if(e instanceof Error) throw e;
+        else return { status: "error", error: e  as any };
+    }
 },
 async changePostProcessEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {

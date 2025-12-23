@@ -28,7 +28,10 @@ use tauri::AppHandle;
 use tauri::Manager;
 
 const AI_REWRITE_MAX_CHARS: usize = 4000;
-const AI_REWRITE_USER_TEMPLATE: &str = "Transcript:\n{transcript}\n\nRewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary.";
+const AI_REWRITE_USER_TEMPLATE: &str = r#"Transcript:
+{transcript}
+
+Rewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary."#;
 
 // Shortcut Action Trait
 pub trait ShortcutAction: Send + Sync {
@@ -511,12 +514,12 @@ impl ShortcutAction for TranscribeAction {
 
                             // Save to history with post-processed text and prompt
                             let hm_clone = Arc::clone(&hm);
-                            let transcription_for_history = transcription.clone();
+                            let original_transcription = transcription.clone();
                             tauri::async_runtime::spawn(async move {
                                 if let Err(e) = hm_clone
                                     .save_transcription(
                                         samples_clone,
-                                        transcription_for_history,
+                                        original_transcription,
                                         post_processed_text,
                                         post_process_prompt,
                                     )
