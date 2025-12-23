@@ -203,6 +203,29 @@
         "remove": "Remove {{word}}"
       }
     },
+    "aiRewrite": {
+      "title": "AI Rewrite",
+      "description": "Send finished transcriptions to an LLM so spoken edit commands like “delete that” are applied before text is pasted.",
+      "enabled": {
+        "label": "Enable AI Rewrite",
+        "description": "Rewrite completed transcriptions with an OpenRouter model before they are pasted."
+      },
+      "apiKey": {
+        "title": "OpenRouter API Key",
+        "description": "Stored locally and used only for rewrite requests.",
+        "placeholder": "sk-or-..."
+      },
+      "model": {
+        "title": "Model",
+        "description": "Model identifier to use for rewrite requests.",
+        "placeholder": "e.g., openrouter/auto"
+      },
+      "systemPrompt": {
+        "title": "System Prompt",
+        "description": "Required. Guides the model to interpret spoken edit commands and output only the final text.",
+        "placeholder": "Describe how the model should rewrite transcripts"
+      }
+    },
     "postProcessing": {
       "title": "Post Process",
       "disabledNotice": "Post processing is currently disabled. Enable it in Debug settings to configure.",

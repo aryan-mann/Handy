@@ -114,6 +114,14 @@ const settingUpdaters: {
   paste_method: (value) => commands.changePasteMethodSetting(value as string),
   clipboard_handling: (value) =>
     commands.changeClipboardHandlingSetting(value as string),
+  ai_rewrite_enabled: (value) =>
+    commands.changeAiRewriteEnabledSetting(value as boolean),
+  ai_rewrite_api_key: (value) =>
+    commands.changeAiRewriteApiKeySetting(value as string),
+  ai_rewrite_model: (value) =>
+    commands.changeAiRewriteModelSetting(value as string),
+  ai_rewrite_system_prompt: (value) =>
+    commands.changeAiRewriteSystemPromptSetting(value as string),
   history_limit: (value) => commands.updateHistoryLimit(value as number),
   post_process_enabled: (value) =>
     commands.changePostProcessEnabledSetting(value as boolean),

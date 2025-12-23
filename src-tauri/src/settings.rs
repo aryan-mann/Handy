@@ -8,6 +8,7 @@ use tauri_plugin_store::StoreExt;
 
 pub const APPLE_INTELLIGENCE_PROVIDER_ID: &str = "apple_intelligence";
 pub const APPLE_INTELLIGENCE_DEFAULT_MODEL_ID: &str = "Apple Intelligence";
+pub const OPENROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "lowercase")]
@@ -273,6 +274,14 @@ pub struct AppSettings {
     pub paste_method: PasteMethod,
     #[serde(default)]
     pub clipboard_handling: ClipboardHandling,
+    #[serde(default = "default_ai_rewrite_enabled")]
+    pub ai_rewrite_enabled: bool,
+    #[serde(default = "default_ai_rewrite_api_key")]
+    pub ai_rewrite_api_key: String,
+    #[serde(default = "default_ai_rewrite_model")]
+    pub ai_rewrite_model: String,
+    #[serde(default = "default_ai_rewrite_system_prompt")]
+    pub ai_rewrite_system_prompt: String,
     #[serde(default = "default_post_process_enabled")]
     pub post_process_enabled: bool,
     #[serde(default = "default_post_process_provider_id")]
@@ -358,6 +367,23 @@ fn default_sound_theme() -> SoundTheme {
     SoundTheme::Marimba
 }
 
+fn default_ai_rewrite_enabled() -> bool {
+    false
+}
+
+fn default_ai_rewrite_api_key() -> String {
+    String::new()
+}
+
+fn default_ai_rewrite_model() -> String {
+    String::new()
+}
+
+fn default_ai_rewrite_system_prompt() -> String {
+    "You are rewriting a raw speech-to-text transcript. Apply any spoken editing instructions like “scratch that”, “delete that”, “undo”, “replace that with …”, or “actually make it …” so the output reflects the user’s intended final text. Remove filler or meta commentary. Return only the final text with no quotes or explanations."
+        .to_string()
+}
+
 fn default_post_process_enabled() -> bool {
     false
 }
@@ -384,7 +410,7 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
         PostProcessProvider {
             id: "openrouter".to_string(),
             label: "OpenRouter".to_string(),
-            base_url: "https://openrouter.ai/api/v1".to_string(),
+            base_url: OPENROUTER_BASE_URL.to_string(),
             allow_base_url_edit: false,
             models_endpoint: Some("/models".to_string()),
         },
@@ -553,6 +579,10 @@ pub fn get_default_settings() -> AppSettings {
         recording_retention_period: default_recording_retention_period(),
         paste_method: PasteMethod::default(),
         clipboard_handling: ClipboardHandling::default(),
+        ai_rewrite_enabled: default_ai_rewrite_enabled(),
+        ai_rewrite_api_key: default_ai_rewrite_api_key(),
+        ai_rewrite_model: default_ai_rewrite_model(),
+        ai_rewrite_system_prompt: default_ai_rewrite_system_prompt(),
         post_process_enabled: default_post_process_enabled(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),

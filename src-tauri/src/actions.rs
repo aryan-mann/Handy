@@ -4,13 +4,19 @@ use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, S
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
-use crate::settings::{get_settings, AppSettings, APPLE_INTELLIGENCE_PROVIDER_ID};
+use crate::settings::{
+    get_settings, AppSettings, APPLE_INTELLIGENCE_PROVIDER_ID, OPENROUTER_BASE_URL,
+};
 use crate::shortcut;
 use crate::tray::{change_tray_icon, TrayIconState};
 use crate::utils::{self, show_recording_overlay, show_transcribing_overlay};
-use async_openai::types::{
-    ChatCompletionRequestMessage, ChatCompletionRequestUserMessageArgs,
-    CreateChatCompletionRequestArgs,
+use async_openai::{
+    config::OpenAIConfig,
+    types::{
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
+    },
+    Client,
 };
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
 use log::{debug, error};
@@ -29,6 +35,101 @@ pub trait ShortcutAction: Send + Sync {
 
 // Transcribe Action
 struct TranscribeAction;
+
+async fn maybe_rewrite_transcription(
+    settings: &AppSettings,
+    transcription: &str,
+) -> Option<String> {
+    if !settings.ai_rewrite_enabled {
+        return None;
+    }
+
+    if transcription.trim().is_empty() {
+        return None;
+    }
+
+    let api_key = settings.ai_rewrite_api_key.trim();
+    let model = settings.ai_rewrite_model.trim();
+    let system_prompt = settings.ai_rewrite_system_prompt.trim();
+
+    if api_key.is_empty() {
+        debug!("AI rewrite skipped because no OpenRouter API key is configured");
+        return None;
+    }
+
+    if model.is_empty() {
+        debug!("AI rewrite skipped because no model is configured");
+        return None;
+    }
+
+    if system_prompt.is_empty() {
+        debug!("AI rewrite skipped because the system prompt is empty");
+        return None;
+    }
+
+    let client = Client::with_config(
+        OpenAIConfig::new()
+            .with_api_base(OPENROUTER_BASE_URL)
+            .with_api_key(api_key),
+    );
+
+    let system_message = match ChatCompletionRequestSystemMessageArgs::default()
+        .content(system_prompt)
+        .build()
+    {
+        Ok(msg) => ChatCompletionRequestMessage::System(msg),
+        Err(e) => {
+            error!("Failed to build AI rewrite system message: {}", e);
+            return None;
+        }
+    };
+
+    let user_message = match ChatCompletionRequestUserMessageArgs::default()
+        .content(format!(
+            "Transcript:\n{}\n\nRewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary.",
+            transcription
+        ))
+        .build()
+    {
+        Ok(msg) => ChatCompletionRequestMessage::User(msg),
+        Err(e) => {
+            error!("Failed to build AI rewrite user message: {}", e);
+            return None;
+        }
+    };
+
+    let request = match CreateChatCompletionRequestArgs::default()
+        .model(model)
+        .messages(vec![system_message, user_message])
+        .build()
+    {
+        Ok(req) => req,
+        Err(e) => {
+            error!("Failed to build AI rewrite request: {}", e);
+            return None;
+        }
+    };
+
+    match client.chat().create(request).await {
+        Ok(response) => {
+            if let Some(choice) = response.choices.first() {
+                if let Some(content) = &choice.message.content {
+                    debug!(
+                        "AI rewrite succeeded. Output length: {} chars",
+                        content.len()
+                    );
+                    return Some(content.clone());
+                }
+            }
+            error!("AI rewrite response had no content");
+            None
+        }
+        Err(e) => {
+            error!("AI rewrite failed via OpenRouter: {}", e);
+            None
+        }
+    }
+}
 
 async fn maybe_post_process_transcription(
     settings: &AppSettings,
@@ -366,16 +467,24 @@ impl ShortcutAction for TranscribeAction {
                             let mut post_processed_text: Option<String> = None;
                             let mut post_process_prompt: Option<String> = None;
 
+                            // First, let the LLM apply rewrite instructions
+                            if let Some(rewritten_text) =
+                                maybe_rewrite_transcription(&settings, &final_text).await
+                            {
+                                final_text = rewritten_text.clone();
+                                post_processed_text = Some(rewritten_text);
+                            }
+
                             // First, check if Chinese variant conversion is needed
                             if let Some(converted_text) =
-                                maybe_convert_chinese_variant(&settings, &transcription).await
+                                maybe_convert_chinese_variant(&settings, &final_text).await
                             {
                                 final_text = converted_text.clone();
                                 post_processed_text = Some(converted_text);
                             }
                             // Then apply regular post-processing if enabled
                             else if let Some(processed_text) =
-                                maybe_post_process_transcription(&settings, &transcription).await
+                                maybe_post_process_transcription(&settings, &final_text).await
                             {
                                 final_text = processed_text.clone();
                                 post_processed_text = Some(processed_text);
