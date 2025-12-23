@@ -27,6 +27,9 @@ use std::time::Instant;
 use tauri::AppHandle;
 use tauri::Manager;
 
+const AI_REWRITE_MAX_CHARS: usize = 4000;
+const AI_REWRITE_USER_TEMPLATE: &str = "Transcript:\n{transcript}\n\nRewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary.";
+
 // Shortcut Action Trait
 pub trait ShortcutAction: Send + Sync {
     fn start(&self, app: &AppHandle, binding_id: &str, shortcut_str: &str);
@@ -87,14 +90,13 @@ async fn maybe_rewrite_transcription(
     let sanitized_transcription: String = transcription
         .chars()
         .filter(|c| !c.is_control() || *c == '\n' || *c == '\r' || *c == '\t')
-        .take(4000)
+        .take(AI_REWRITE_MAX_CHARS)
         .collect();
 
     let user_message = match ChatCompletionRequestUserMessageArgs::default()
-        .content(format!(
-            "Transcript:\n{}\n\nRewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary.",
-            sanitized_transcription
-        ))
+        .content(
+            AI_REWRITE_USER_TEMPLATE.replace("{transcript}", &sanitized_transcription),
+        )
         .build()
     {
         Ok(msg) => ChatCompletionRequestMessage::User(msg),

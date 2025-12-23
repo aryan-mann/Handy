@@ -380,7 +380,7 @@ fn default_ai_rewrite_model() -> String {
 }
 
 fn default_ai_rewrite_system_prompt() -> String {
-    "You are rewriting a raw speech-to-text transcript. Apply any spoken editing instructions like “scratch that”, “delete that”, “undo”, “replace that with …”, or “actually make it …” so the output reflects the user’s intended final text. Remove filler or meta commentary. Return only the final text with no quotes or explanations."
+    r#"You are rewriting a raw speech-to-text transcript. Apply any spoken editing instructions like "scratch that", "delete that", "undo", "replace that with …", or "actually make it …" so the output reflects the user’s intended final text. Remove filler or meta commentary. Return only the final text with no quotes or explanations."#
         .to_string()
 }
 
