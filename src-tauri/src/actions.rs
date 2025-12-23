@@ -84,10 +84,16 @@ async fn maybe_rewrite_transcription(
         }
     };
 
+    let sanitized_transcription: String = transcription
+        .chars()
+        .filter(|c| !c.is_control() || *c == '\n' || *c == '\r' || *c == '\t')
+        .take(4000)
+        .collect();
+
     let user_message = match ChatCompletionRequestUserMessageArgs::default()
         .content(format!(
             "Transcript:\n{}\n\nRewrite this into the final text the user wants typed. Apply spoken edit commands (e.g., delete/undo/replace) instead of transcribing them. Return only the finished text with no commentary.",
-            transcription
+            sanitized_transcription
         ))
         .build()
     {
@@ -471,8 +477,8 @@ impl ShortcutAction for TranscribeAction {
                             if let Some(rewritten_text) =
                                 maybe_rewrite_transcription(&settings, &final_text).await
                             {
-                                final_text = rewritten_text.clone();
-                                post_processed_text = Some(rewritten_text);
+                                final_text = rewritten_text;
+                                post_processed_text = Some(final_text.clone());
                             }
 
                             // First, check if Chinese variant conversion is needed

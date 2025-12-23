@@ -20,9 +20,11 @@ export const AiRewriteSettings: React.FC = () => {
   const [modelDraft, setModelDraft] = useState(model);
   const [promptDraft, setPromptDraft] = useState(systemPrompt);
 
-  useEffect(() => setApiKeyDraft(apiKey), [apiKey]);
-  useEffect(() => setModelDraft(model), [model]);
-  useEffect(() => setPromptDraft(systemPrompt), [systemPrompt]);
+  useEffect(() => {
+    setApiKeyDraft(apiKey);
+    setModelDraft(model);
+    setPromptDraft(systemPrompt);
+  }, [apiKey, model, systemPrompt]);
 
   const handleApiKeyBlur = async () => {
     if (apiKeyDraft === apiKey) return;
